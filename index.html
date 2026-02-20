@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="pt-pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MJ ADMIN V15 - RED SUPREME</title>
+    <link rel="manifest" href="./manifest.json">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #ff0000; --accent: #00ff9d; --bg: #050505; --red-dark: #8b0000; --blue: #00d9ff; --wait: #ffcc00; }
+        body { margin: 0; font-family: 'Orbitron', sans-serif; background: #000; color: #fff; user-select: none; }
+        
+        #loginScreen { position: fixed; inset: 0; background: #000; display: flex; align-items: center; justify-content: center; z-index: 10000; overflow-y: auto; }
+        .login-card { padding: 40px; border: 2px solid var(--primary); text-align: center; box-shadow: 0 0 20px var(--primary); width: 80%; max-width: 350px; background: #000; }
+        
+        #mainApp { display: none; flex-direction: column; min-height: 100vh; }
+        .top-nav { background: #111; display: flex; overflow-x: auto; padding: 15px; border-bottom: 2px solid var(--primary); position: sticky; top: 0; z-index: 100; }
+        .nav-item { padding: 12px 20px; cursor: pointer; border: 1px solid var(--primary); margin-right: 10px; font-size: 10px; white-space: nowrap; letter-spacing: 1px; }
+        .nav-item.active { background: var(--primary); box-shadow: 0 0 10px var(--primary); }
+
+        .main-content { padding: 20px; }
+        .section { display: none; }
+        .section.active { display: block !important; }
+
+        .card { background: rgba(20,20,25,0.9); padding: 20px; border: 1px solid var(--primary); margin-bottom: 15px; }
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .stat-box { background: rgba(0,0,0,0.5); padding: 10px; border: 1px solid #333; text-align: center; }
+        .stat-box small { font-size: 8px; color: #888; display: block; margin-bottom: 5px; }
+        .stat-box span { font-size: 14px; font-weight: bold; }
+        .stat-value { font-size: 28px; color: #fff; text-shadow: 0 0 15px var(--primary); text-align: center; }
+
+        input, select { width: 100%; padding: 12px; margin: 8px 0; background: #000; border: 1px solid var(--primary); color: #fff; font-family: 'Orbitron'; box-sizing: border-box; font-size: 11px; }
+        button { width: 100%; padding: 12px; background: var(--primary); border: none; color: #fff; font-weight: bold; cursor: pointer; text-transform: uppercase; font-family: 'Orbitron'; font-size: 11px; margin-top: 5px; }
+        
+        .key-item { background: #0a0a0a; padding: 15px; border-left: 4px solid var(--primary); margin-bottom: 15px; border-top: 1px solid #222; }
+        .timer-box { font-size: 10px; color: var(--primary); margin: 8px 0; padding: 5px; background: rgba(255,0,0,0.05); border: 1px solid rgba(255,0,0,0.1); }
+        .key-info { font-size: 9px; color: #aaa; margin-bottom: 5px; display: flex; justify-content: space-between; }
+        
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 10px; }
+        .btn-mini { padding: 8px; font-size: 8px; background: transparent; border: 1px solid var(--primary); color: #fff; cursor: pointer; }
+
+        .insta-link { display: block; margin-top: 20px; color: #fff; text-decoration: none; font-size: 10px; border: 1px solid var(--primary); padding: 10px; background: rgba(255,0,0,0.1); transition: 0.3s; text-align: center; }
+        
+        #registroArea { display: none; margin-top: 20px; border-top: 1px solid #333; padding-top: 20px; }
+        .toggle-link { font-size: 9px; color: var(--blue); cursor: pointer; margin-top: 15px; display: inline-block; text-decoration: underline; }
+
+        .user-row { display: grid; grid-template-columns: 1fr 1fr 1fr 40px; text-align: left; padding: 10px; border-bottom: 1px solid #222; font-size: 9px; align-items: center; }
+        .del-btn { color: var(--primary); font-weight: bold; cursor: pointer; text-align: center; border: 1px solid var(--primary); border-radius: 3px; background: rgba(255,0,0,0.1); }
+        .transfer-box { margin-top: 20px; padding-top: 20px; border-top: 2px solid var(--primary); }
+    </style>
+</head>
+<body>
+
+    <div id="loginScreen">
+        <div class="login-card">
+            <h1 style="color:var(--primary); margin:0;">MJ ADMIN</h1>
+            <p style="font-size:10px; color:#888; margin-bottom:20px;">SISTEMA SUPREME</p>
+            
+            <div id="loginCampos">
+                <input type="text" id="userInput" placeholder="USUÁRIO">
+                <input type="password" id="passInput" placeholder="SENHA">
+                <button onclick="verificarLogin()">ENTRAR</button>
+                <span class="toggle-link" onclick="toggleRegistro(true)">SOLICITAR NOVA CONTA</span>
+            </div>
+
+            <div id="registroArea">
+                <p style="font-size:10px; color:var(--accent);">REGISTRO DE SUB-CONTA</p>
+                <input type="text" id="regUser" placeholder="DEFINIR USUÁRIO">
+                <input type="password" id="regPass" placeholder="DEFINIR SENHA">
+                <input type="password" id="regPassConf" placeholder="CONFIRMAR SENHA">
+                <button onclick="solicitarAcesso()" style="background:var(--blue); color:#000;">ENVIAR PARA O DONO</button>
+                <br>
+                <span class="toggle-link" onclick="toggleRegistro(false)">VOLTAR</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="mainApp">
+        <nav class="top-nav" id="menuNav">
+            <div class="nav-item active" onclick="trocarAba('dash', this)">DASH</div>
+            <div class="nav-item" onclick="trocarAba('gerar', this)">GERAR</div>
+            <div class="nav-item" onclick="trocarAba('hist', this)">BANCO</div>
+            <div class="nav-item" onclick="trocarAba('info', this)">INFO</div>
+        </nav>
+
+        <div class="main-content">
+            <div id="dash" class="section active">
+                <div class="card">
+                    <p style="font-size:9px;color:#888; text-align:center;">USUÁRIO: <span id="userLogado" style="color:var(--primary)">-</span></p>
+                    <div id="saldoTxt" class="stat-value">0</div>
+                    
+                    <div class="stat-grid">
+                        <div class="stat-box"><small>ATIVAS</small><span id="countAtiva" style="color:var(--accent)">0</span></div>
+                        <div class="stat-box"><small>PAUSADAS</small><span id="countPausa" style="color:var(--blue)">0</span></div>
+                        <div class="stat-box"><small>AGUARDANDO</small><span id="countWait" style="color:var(--wait)">0</span></div>
+                        <div class="stat-box"><small>EXPIRADAS</small><span id="countExp" style="color:var(--primary)">0</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="gerar" class="section">
+                <div class="card">
+                    <input type="text" id="clienteNome" placeholder="NOME DO CLIENTE">
+                    <select id="tempoSel">
+                        <option value="10|1">01 DIA - 10c</option>
+                        <option value="25|3">03 DIAS - 25c</option>
+                        <option value="50|7">07 DIAS - 50c</option>
+                        <option value="200|30">30 DIAS - 200c</option>
+                        <option value="5000|99999">INFINITO - 5000c</option>
+                    </select>
+                    <select id="ipLimitSel">
+                        <option value="0|1">1 IP - GRÁTIS</option>
+                        <option value="50|2">2 IPs - 50c</option>
+                        <option value="100|3">3 IPs - 100c</option>
+                        <option value="5000|999">ILIMITADO - 5000c</option>
+                    </select>
+                    <button onclick="gerarAgora()">GERAR KEY PAUSADA</button>
+                </div>
+            </div>
+
+            <div id="hist" class="section">
+                <div class="btn-grid" style="margin-bottom: 15px;">
+                    <button onclick="globalPause(true)" style="background:var(--blue); font-size: 8px;">PAUSAR TUDO</button>
+                    <button onclick="globalPause(false)" style="background:var(--accent); color:#000; font-size: 8px;">PLAY TUDO</button>
+                </div>
+                <div id="listaChaves"></div>
+            </div>
+
+            <div id="contasPanel" class="section">
+                <div class="card">
+                    <h3 style="font-size:12px; color:var(--primary); text-align:center;">GERENCIAR CONTAS</h3>
+                    <div id="listaUsuarios"></div>
+
+                    <div class="transfer-box">
+                        <h4 style="font-size:10px; color:var(--blue); text-align:center;">TRANSFERIR CRÉDITOS</h4>
+                        <select id="selectDestino"></select>
+                        <input type="number" id="valorTransfer" placeholder="QUANTIDADE">
+                        <button onclick="executarTransferencia()" style="background:var(--accent); color:#000;">ENVIAR AGORA</button>
+                    </div>
+
+                    <div class="transfer-box" style="margin-top: 10px; border-top: 1px dashed var(--primary); padding-top: 10px;">
+                        <h4 style="font-size:10px; color:var(--primary); text-align:center;">REMOVER CRÉDITOS (DONO)</h4>
+                        <select id="selectRemover"></select>
+                        <input type="number" id="valorRemover" placeholder="QUANTIDADE">
+                        <button onclick="executarRemocao()" style="background:var(--red-dark); color:#fff;">REMOVER CRÉDITOS</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="info" class="section" style="text-align: center;">
+                <div class="card">
+                    <h3 style="font-size:12px; color:var(--primary)">SISTEMA</h3>
+                    <input type="password" id="passReset" placeholder="SENHA DE RESET">
+                    <button onclick="resetarSaldoComSenha()">REPOR 500.000 CRÉDITOS (DONO)</button>
+                    <button onclick="location.reload()" style="background:#333; margin-top:10px;">SAIR DA CONTA</button>
+                    <a href="https://www.instagram.com/miguel_v_.7?igsh=MXgwb2pycW5obzRsNw==" target="_blank" class="insta-link">INSTAGRAM: @miguel_v_.7</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let contas = JSON.parse(localStorage.getItem('mj_contas_v15')) || [];
+        let contaAtiva = null;
+        let db = JSON.parse(localStorage.getItem('mj_db_v15')) || [];
+        let saldo = 0;
+
+        const indexDonoExistente = contas.findIndex(x => x.user === "DONO");
+        if (indexDonoExistente === -1) {
+            contas.push({ user: "DONO", pass: "110211", saldo: 500000, pedidos: [] });
+        }
+        localStorage.setItem('mj_contas_v15', JSON.stringify(contas));
+
+        function toggleRegistro(show) {
+            document.getElementById('loginCampos').style.display = show ? 'none' : 'block';
+            document.getElementById('registroArea').style.display = show ? 'block' : 'none';
+        }
+
+        function solicitarAcesso() {
+            const u = document.getElementById('regUser').value;
+            const p = document.getElementById('regPass').value;
+            if(!u || !p) return alert("PREENCHA OS CAMPOS");
+            if(contas.find(x => x.user === u)) return alert("USUÁRIO JÁ EXISTE");
+            contas.find(x => x.user === "DONO").pedidos.push({ user: u, pass: p });
+            localStorage.setItem('mj_contas_v15', JSON.stringify(contas));
+            alert("PEDIDO ENVIADO AO DONO!"); toggleRegistro(false);
+        }
+
+        function verificarLogin() {
+            const u = document.getElementById('userInput').value;
+            const p = document.getElementById('passInput').value;
+            const conta = contas.find(x => x.user === u && x.pass === p);
+
+            if(conta) {
+                contaAtiva = conta;
+                saldo = conta.saldo;
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('mainApp').style.display = 'flex';
+                document.getElementById('userLogado').innerText = conta.user;
+
+                if(conta.user === "DONO") {
+                    const nav = document.getElementById('menuNav');
+                    if(!document.getElementById('navContas')) {
+                        const btn = document.createElement('div');
+                        btn.id = 'navContas'; btn.className = 'nav-item'; btn.innerText = 'CONTAS';
+                        btn.onclick = function() { trocarAba('contasPanel', this); listarUsuarios(); };
+                        nav.insertBefore(btn, nav.lastElementChild);
+                    }
+                    processarPedidos();
+                }
+
+                atualizarInterface();
+                setInterval(() => { renderizarKeys(); atualizarStats(); }, 1000);
+            } else { alert("ACESSO NEGADO"); }
+        }
+
+        function processarPedidos() {
+            const master = contas.find(x => x.user === "DONO");
+            if(master.pedidos.length > 0) {
+                master.pedidos.forEach((p) => {
+                    if(confirm("APROVAR NOVO USUÁRIO?\nUser: " + p.user + "\nPass: " + p.pass)) {
+                        // REGRA: Novos usuários começam com 3.000 créditos
+                        contas.push({ user: p.user, pass: p.pass, saldo: 3000, pedidos: [] });
+                    }
+                });
+                master.pedidos = [];
+                localStorage.setItem('mj_contas_v15', JSON.stringify(contas));
+            }
+        }
+
+        function listarUsuarios() {
+            const lista = document.getElementById('listaUsuarios');
+            const select = document.getElementById('selectDestino');
+            const selectRem = document.getElementById('selectRemover');
+            
+            let html = '<div class="user-row" style="color:var(--primary); font-weight:bold; border-bottom: 2px solid var(--primary)"><span>USER</span> <span>PASS</span> <span>SALDO</span> <span>DEL</span></div>';
+            let options = '<option value="">SELECIONE UM USUÁRIO</option>';
+            
+            contas.forEach((u, index) => {
+                const delBtn = u.user === "DONO" ? '<span>-</span>' : `<span class="del-btn" onclick="deletarConta(${index})">X</span>`;
+                html += `
+                <div class="user-row">
+                    <span style="color:#fff">${u.user}</span> 
+                    <span style="color:var(--blue)">${u.pass}</span> 
+                    <span style="color:var(--accent)">${u.saldo.toLocaleString()}c</span>
+                    ${delBtn}
+                </div>`;
+                if(u.user !== "DONO") options += `<option value="${u.user}">${u.user}</option>`;
+            });
+            lista.innerHTML = html;
+            select.innerHTML = options;
+            if(selectRem) selectRem.innerHTML = options;
+        }
+
+        function executarRemocao() {
+            const alvoUser = document.getElementById('selectRemover').value;
+            const qtd = parseInt(document.getElementById('valorRemover').value);
+            if(!alvoUser || isNaN(qtd) || qtd <= 0) return alert("DADOS INVÁLIDOS");
+            
+            const idx = contas.findIndex(x => x.user === alvoUser);
+            if(confirm(`REMOVER ${qtd} CRÉDITOS DE ${alvoUser}?`)) {
+                contas[idx].saldo -= qtd;
+                document.getElementById('valorRemover').value = "";
+                listarUsuarios();
+                localStorage.setItem('mj_contas_v15', JSON.stringify(contas));
+                alert("CRÉDITOS REMOVIDOS!");
+            }
+        }
+
+        function executarTransferencia() {
+            const destinoUser = document.getElementById('selectDestino').value;
+            const qtd = parseInt(document.getElementById('valorTransfer').value);
+            if(!destinoUser || isNaN(qtd) || qtd <= 0) return alert("VALOR INVÁLIDO");
+            if(saldo < qtd) return alert("SALDO INSUFICIENTE");
+            const indexDestino = contas.findIndex(x => x.user === destinoUser);
+            saldo -= qtd;
+            contas[indexDestino].saldo += qtd;
+            document.getElementById('valorTransfer').value = "";
+            listarUsuarios();
+            atualizarInterface();
+            alert("TRANSFERÊNCIA CONCLUÍDA!");
+        }
+
+        function globalPause(pausar) {
+            db.forEach(item => {
+                if(item.owner === contaAtiva.user) {
+                    if(pausar && item.status === 'Ativa' && !item.infinito) {
+                        item.msRestante = item.validade - Date.now();
+                        item.status = 'Pausada';
+                    } else if(!pausar && item.status === 'Pausada') {
+                        item.validade = Date.now() + item.msRestante;
+                        item.status = 'Ativa';
+                    }
+                }
+            });
+            atualizarInterface();
+        }
+
+        function atualizarInterface() {
+            document.getElementById('saldoTxt').innerText = saldo.toLocaleString('pt-BR');
+            if(contaAtiva) {
+                contaAtiva.saldo = saldo;
+                localStorage.setItem('mj_contas_v15', JSON.stringify(contas));
+            }
+            localStorage.setItem('mj_db_v15', JSON.stringify(db));
+        }
+
+        function renderizarKeys() {
+            const lista = document.getElementById('listaChaves');
+            if(!lista) return;
+            let html = '';
+            
+            // Filtro para mostrar apenas as chaves do dono logado
+            const minhasKeys = db.filter(x => x.owner === contaAtiva.user);
+            
+            minhasKeys.forEach((item) => {
+                const i = db.indexOf(item); 
+                const tempo = calcularTempo(item);
+                let cor = item.status === 'Aguardando' ? 'var(--wait)' : (item.status === 'Ativa' ? 'var(--accent)' : (item.status === 'Pausada' ? 'var(--blue)' : 'var(--primary)'));
+                html += `<div class="key-item" style="border-left-color: ${cor}">
+                    <div class="key-info"><b>${item.key}</b> <span>${item.status}</span></div>
+                    <div class="key-info"><span>${item.nome}</span> <span style="color:var(--blue)">IP: ${item.limite >= 999 ? '∞' : item.limite}</span></div>
+                    <div class="timer-box">${item.infinito ? 'VITALÍCIO' : (item.status === 'Aguardando' ? 'AGUARDANDO' : tempo)}</div>
+                    <div class="btn-grid">
+                        <button class="btn-mini" style="color:var(--blue); border-color:var(--blue);" onclick="resetEPlay(${i})">RESET/PLAY</button>
+                        <button class="btn-mini" onclick="renovarModal(${i})">+DIAS</button>
+                        <button class="btn-mini" style="border-color:#ff4444;" onclick="banir(${i})">BANIR</button>
+                    </div>
+                </div>`;
+            });
+            lista.innerHTML = html;
+        }
+
+        function calcularTempo(item) {
+            if (item.status === 'Pausada' || item.status === 'Aguardando') return "PAUSADO";
+            const rest = item.validade - Date.now();
+            if (rest <= 0) { item.status = 'Expirada'; return "EXPIRADA"; }
+            const d = Math.floor(rest / 86400000);
+            const h = Math.floor((rest % 86400000) / 3600000);
+            const m = Math.floor((rest % 3600000) / 60000);
+            return `${d}d ${h}h ${m}m`;
+        }
+
+        function gerarAgora() {
+            const [ct, dias] = document.getElementById('tempoSel').value.split('|');
+            const [ci, lim] = document.getElementById('ipLimitSel').value.split('|');
+            const total = parseInt(ct) + parseInt(ci);
+            if(saldo >= total) {
+                saldo -= total;
+                db.unshift({
+                    key: "MJ-" + Math.floor(1000 + Math.random() * 9000),
+                    nome: document.getElementById('clienteNome').value || "USER",
+                    duracaoMs: parseInt(dias) * 86400000,
+                    validade: 0, status: 'Aguardando', limite: parseInt(lim),
+                    infinito: parseInt(dias) > 90000, investido: total,
+                    owner: contaAtiva.user
+                });
+                atualizarInterface();
+            } else { alert("SEM SALDO"); }
+        }
+
+        function resetEPlay(i) {
+            if(saldo >= 50) {
+                saldo -= 50;
+                if(db[i].status === 'Aguardando') { db[i].validade = Date.now() + db[i].duracaoMs; db[i].status = 'Ativa'; }
+                else if(db[i].status === 'Pausada') { db[i].validade = Date.now() + db[i].msRestante; db[i].status = 'Ativa'; }
+                atualizarInterface();
+            }
+        }
+
+        function renovarModal(i) {
+            const opcao = prompt("1- 1 Dia (10c)\n2- 7 Dias (50c)\n3- 30 Dias (200c)");
+            let custo = 0, dias = 0;
+            if(opcao == "1") { custo = 10; dias = 1; }
+            else if(opcao == "2") { custo = 50; dias = 7; }
+            else if(opcao == "3") { custo = 200; dias = 30; }
+            else return;
+            if(saldo >= custo) {
+                saldo -= custo;
+                const ms = dias * 86400000;
+                db[i].investido += custo;
+                if(db[i].status === 'Aguardando') db[i].duracaoMs += ms;
+                else db[i].validade += ms;
+                atualizarInterface();
+            }
+        }
+
+        function banir(i) {
+            if(confirm("BANIR?")) { saldo += db[i].investido; db.splice(i,1); atualizarInterface(); }
+        }
+
+        function atualizarStats() {
+            const minhas = db.filter(x => x.owner === contaAtiva.user);
+            document.getElementById('countAtiva').innerText = minhas.filter(x => x.status === 'Ativa').length;
+            document.getElementById('countPausa').innerText = minhas.filter(x => x.status === 'Pausada').length;
+            document.getElementById('countWait').innerText = minhas.filter(x => x.status === 'Aguardando').length;
+            document.getElementById('countExp').innerText = minhas.filter(x => x.status === 'Expirada').length;
+        }
+
+        function trocarAba(id, btn) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+            document.getElementById(id).classList.add('active'); btn.classList.add('active');
+        }
+
+        function deletarConta(idx) {
+            const nome = contas[idx].user;
+            if(confirm(`DELETAR CONTA [${nome}] PERMANENTEMENTE?`)) {
+                contas.splice(idx, 1);
+                localStorage.setItem('mj_contas_v15', JSON.stringify(contas));
+                listarUsuarios();
+                alert("CONTA DELETADA.");
+            }
+        }
+
+        function resetarSaldoComSenha() {
+            if(document.getElementById('passReset').value === "244") {
+                saldo = 500000; atualizarInterface();
+                alert("CRÉDITOS DO DONO REPOSTOS!"); document.getElementById('passReset').value = "";
+            } else { alert("SENHA MESTRE INCORRETA"); }
+        }
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js')
+            .then(() => console.log("PWA Ativo"));
+        }
+    </script>
+</body>
+</html>
